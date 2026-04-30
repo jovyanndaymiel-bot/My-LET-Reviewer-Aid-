@@ -3,332 +3,194 @@ html
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LET Reviewer Aid Pro (30 Questions per Category)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My LET Reviewer Aid</title>
     <style>
-        :root {
-            --bg-gened: #e3f2fd; --text-gened: #0d47a1;
-            --bg-profed: #f1f8e9; --text-profed: #33691e;
-            --bg-english: #fff3e0; --text-english: #e65100;
-            --bg-math: #f3e5f5; --text-math: #4a148c;
-            --bg-science: #e0f2f1; --text-science: #004d40;
-        }
-        body { margin: 0; font-family: 'Arial Black', sans-serif; height: 100vh; display: flex; flex-direction: column; }
-        #menu-screen, #quiz-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        :root { --p: #0ea5e9; --s: #6366f1; --bg: #0f172a; --card: rgba(30, 41, 59, 0.8); --txt: #f8fafc; --ok: #22c55e; --err: #ef4444; --rat: #f472b6; }
+        body { font-family: 'Segoe UI', sans-serif; background: radial-gradient(circle at top left, #1e293b, #0f172a); color: var(--txt); margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #app { width: 95%; max-width: 1000px; text-align: center; }
+        .t-bg { background: rgba(255,255,255,0.1); height: 12px; border-radius: 20px; margin: 15px 0; }
+        #t-bar { width: 100%; height: 100%; background: linear-gradient(90deg, var(--p), var(--ok)); border-radius: 20px; transition: width 1s linear; }
+        .q-card { background: var(--card); backdrop-filter: blur(12px); padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        .tag { display: inline-block; background: linear-gradient(90deg, var(--p), var(--s)); padding: 5px 20px; border-radius: 50px; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; font-size: 1.1rem; }
+        .q-txt { font-size: 2.5rem; font-weight: 800; margin-bottom: 30px; line-height: 1.2; }
+        .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .opt { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; cursor: pointer; text-align: left; font-size: 1.6rem; border: 2px solid rgba(255,255,255,0.1); }
+        .ok-ans { background: var(--ok) !important; font-weight: bold; border-color: #fff; }
+        .err-ans { background: var(--err) !important; border-color: #fff; }
+        .r-box { display: none; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 15px; margin-top: 20px; border-left: 6px solid var(--rat); text-align: left; font-size: 1.3rem; line-height: 1.4; overflow-y: auto; max-height: 150px; }
+        button { margin-top: 25px; padding: 15px 40px; font-size: 1.6rem; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; background: white; color: #0f172a; transition: 0.3s; }
         .hidden { display: none !important; }
-        h1 { font-size: 5rem; text-align: center; }
-        #question-text { font-size: 3rem; text-align: center; padding: 0 80px; margin-bottom: 30px; line-height: 1.2; }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 90%; max-width: 1400px; }
-        .opt-btn { background: white; border: 5px solid #333; padding: 25px; font-size: 2.2rem; cursor: pointer; border-radius: 15px; font-weight: bold; text-align: left; }
-        .correct { background: #2e7d32 !important; color: white; border-color: #1b5e20; }
-        .wrong { background: #c62828 !important; color: white; border-color: #8e0000; }
-        #ratio-box { margin-top: 25px; width: 85%; padding: 20px; border-radius: 15px; background: white; border: 4px solid #333; font-size: 2rem; text-align: center; visibility: hidden; }
-        #hud { position: absolute; top: 20px; width: 95%; display: flex; justify-content: space-between; font-size: 2.5rem; }
-        #timer { color: #d32f2f; font-weight: 900; font-size: 4.5rem; }
-        .menu-btn { width: 85%; max-width: 800px; padding: 20px; margin: 10px; font-size: 2.5rem; cursor: pointer; border: 5px solid currentColor; background: white; border-radius: 20px; font-weight: bold; }
-        .btn { padding: 20px 40px; font-size: 2rem; cursor: pointer; border-radius: 10px; border: none; background: #333; color: white; margin-top: 20px;}
     </style>
 </head>
-<body id="body">
-    <div id="menu-screen">
-        <h1>LET REVIEWER AID</h1>
-        <button class="menu-btn" style="color: var(--text-gened)" onclick="startQuiz('Gen Ed')">GENERAL EDUCATION</button>
-        <button class="menu-btn" style="color: var(--text-profed)" onclick="startQuiz('Prof Ed')">PROFESSIONAL EDUCATION</button>
-        <button class="menu-btn" style="color: var(--text-english)" onclick="startQuiz('English')">MAJOR: ENGLISH</button>
-        <button class="menu-btn" style="color: var(--text-math)" onclick="startQuiz('Math')">MAJOR: MATH</button>
-        <button class="menu-btn" style="color: var(--text-science)" onclick="startQuiz('Science')">MAJOR: SCIENCE</button>
-    </div>
-    <div id="quiz-screen" class="hidden">
-        <div id="hud"><div id="score-display">Score: 0</div><div id="timer">30</div></div>
-        <div id="question-text"></div>
-        <div class="options-grid" id="options-container">
-            <button class="opt-btn" id="optA" onclick="handleChoice('A')"></button>
-            <button class="opt-btn" id="optB" onclick="handleChoice('B')"></button>
-            <button class="opt-btn" id="optC" onclick="handleChoice('C')"></button>
-            <button class="opt-btn" id="optD" onclick="handleChoice('D')"></button>
+<body>
+    <div id="app">
+        <div id="quiz-ui">
+            <div id="cat" class="tag">Subject</div>
+            <div id="t-txt" style="font-size: 1.5rem; font-weight: bold;">30s</div>
+            <div class="t-bg"><div id="t-bar"></div></div>
+            <div id="count" style="margin-bottom: 10px; opacity: 0.6;">QUESTION 1 OF 100</div>
+            <div class="q-card">
+                <div id="q-txt" class="q-txt">Loading...</div>
+                <div id="opt-c" class="opts"></div>
+                <div id="r-box" class="r-box"><strong style="color: var(--rat);">WHY:</strong><br><span id="r-txt"></span></div>
+            </div>
+            <button id="n-btn" onclick="next()" class="hidden">NEXT QUESTION →</button>
         </div>
-        <div id="ratio-box"></div>
-        <button class="btn" id="next-btn" style="display:none; background: #1a237e;" onclick="nextQuestion()">NEXT QUESTION ▶</button>
+        <div id="s-ui" class="hidden">
+            <div class="q-card">
+                <h1 style="color: var(--p);">Subject Finished!</h1>
+                <h2 id="s-name"></h2>
+                <div style="font-size: 5rem; font-weight: 900;"><span id="s-val" style="color: var(--ok);">0</span> / 20</div>
+                <button onclick="cont()">CONTINUE</button>
+            </div>
+        </div>
+        <div id="f-ui" class="hidden">
+            <div class="q-card">
+                <h1 style="color: var(--ok);">FUTURE LPT!</h1>
+                <p>Mock Exam Complete</p>
+                <div style="font-size: 6rem; font-weight: 900;"><span id="f-val" style="color: var(--p);">0</span> / 100</div>
+                <button onclick="location.reload()">RESTART</button>
+            </div>
+        </div>
     </div>
 
 <script>
-    const database = {
-        "Gen Ed": [
-            {q: "Who is the Father of the Philippine Constitution?", a: "A", opts: ["Claro M. Recto", "Jose Laurel", "Cecilia Muñoz-Palma", "Diosdado Macapagal"], r: "Claro M. Recto presided over the 1934 Constitutional Convention."},
-            {q: "Which vitamin is synthesized by the skin through sunlight?", a: "C", opts: ["Vitamin A", "Vitamin B12", "Vitamin D", "Vitamin K"], r: "Vitamin D is known as the 'sunshine vitamin' as the skin produces it when exposed to UV rays."},
-            {q: "The sum of all angles in a triangle is?", a: "B", opts: ["90°", "180°", "270°", "360°"], r: "Interior angles of any triangle always total 180 degrees."},
-            {q: "Who wrote 'Urbana at Feliza'?", a: "A", opts: ["Modesto de Castro", "Francisco Balagtas", "Jose dela Cruz", "Lope K. Santos"], r: "Modesto de Castro is known as the father of Tagalog classic prose for this work."},
-            {q: "What is the smallest unit of sound in a language?", a: "A", opts: ["Phoneme", "Morpheme", "Syntax", "Grapheme"], r: "A phoneme is the smallest unit of sound that distinguishes words."},
-            {q: "Find the average of integers from 1 to 31.", a: "B", opts: ["15", "16", "31", "32"], r: "Average = (1 + 31) / 2 = 16."},
-            {q: "Who was the founder of La Liga Filipina?", a: "B", opts: ["Andres Bonifacio", "Jose Rizal", "Marcelo H. del Pilar", "Apolinario Mabini"], r: "Jose Rizal founded it in 1892 to peacefully unite the archipelago."},
-            {q: "Which part of the cell is the powerhouse?", a: "B", opts: ["Nucleus", "Mitochondria", "Ribosome", "Vacuole"], r: "Mitochondria produce ATP, the energy currency of the cell."},
-            {q: "What was the first book printed in the Philippines?", a: "B", opts: ["Noli Me Tangere", "Doctrina Christiana", "El Filibusterismo", "Urbana at Feliza"], r: "Doctrina Christiana was printed in 1593."},
-            {q: "Who is the 'Brains of the Revolution'?", a: "A", opts: ["Apolinario Mabini", "Emilio Jacinto", "Antonio Luna", "Emilio Aguinaldo"], r: "Mabini was the advisor to Aguinaldo, while Jacinto was the 'Brains of the Katipunan'."},
-            {q: "Who is the Father of the Philippine Constitution?", a: "A", opts: ["Claro M. Recto", "Jose Laurel", "Cecilia Muñoz-Palma", "Diosdado Macapagal"], r: "Claro M. Recto presided over the 1934 Constitutional Convention."},
-            {q: "Which vitamin is synthesized by the skin when exposed to sunlight?", a: "C", opts: ["Vitamin A", "Vitamin B12", "Vitamin D", "Vitamin K"], r: "Vitamin D is known as the 'sunshine vitamin' produced by UV exposure."},
-            {q: "What is the sum of all interior angles in any triangle?", a: "B", opts: ["90°", "180°", "270°", "360°"], r: "Interior angles of any triangle always total 180 degrees."},
-            {q: "Who wrote 'Urbana at Feliza'?", a: "A", opts: ["Modesto de Castro", "Francisco Balagtas", "Jose dela Cruz", "Lope K. Santos"], r: "Modesto de Castro is the author of this Tagalog classic."},
-            {q: "What is the smallest unit of sound that distinguishes words?", a: "A", opts: ["Phoneme", "Morpheme", "Syntax", "Grapheme"], r: "A phoneme is the smallest unit of sound in speech."},
-            {q: "Find the average of integers from 1 to 31.", a: "B", opts: ["15", "16", "31", "32"], r: "Average = (1 + 31) / 2 = 16."},
-            {q: "Who was the founder of La Liga Filipina?", a: "B", opts: ["Andres Bonifacio", "Jose Rizal", "Marcelo H. del Pilar", "Apolinario Mabini"], r: "Jose Rizal founded it to peacefully unite the archipelago."},
-            {q: "Which part of the cell is the powerhouse?", a: "B", opts: ["Nucleus", "Mitochondria", "Ribosome", "Vacuole"], r: "Mitochondria produce ATP, the energy currency of the cell."},
-            {q: "What was the first book printed in the Philippines?", a: "B", opts: ["Noli Me Tangere", "Doctrina Christiana", "El Filibusterismo", "Urbana at Feliza"], r: "Doctrina Christiana was printed in 1593."},
-            {q: "Who is the 'Brains of the Revolution'?", a: "A", opts: ["Apolinario Mabini", "Emilio Jacinto", "Antonio Luna", "Emilio Aguinaldo"], r: "Mabini was the advisor to Aguinaldo."},
-            {q: "A recipe calls for 2 1/4 cups of flour. If you make 3 batches, how much flour?", a: "D", opts: ["6 1/4", "6 3/4", "7 1/4", "7 3/4"], r: "3 * 2.25 = 6.75 or 6 3/4."},
-            {q: "Smallest state of matter?", a: "C", opts: ["Solid", "Liquid", "Gas", "Plasma"], r: "In common states, gas has the least density and definite shape."},
-            {q: "Which figure of speech uses 'like' or 'as'?", a: "A", opts: ["Simile", "Metaphor", "Personification", "Hyperbole"], r: "Similes use direct comparison with like/as."},
-            {q: "Sunshine Vitamin?", a: "C", opts: ["Vit A", "Vit B", "Vit D", "Vit K"], r: "Vitamin D is produced with UV exposure."},
-            {q: "Sum of angles in a square?", a: "D", opts: ["90", "180", "270", "360"], r: "Quadrilaterals total 360 degrees."},
-            {q: "Smallest unit of life?", a: "B", opts: ["Atom", "Cell", "Tissue", "Organ"], r: "The cell is the basic functional unit."},
-            {q: "Who wrote 'To the Filipino Youth'?", a: "B", opts: ["Bonifacio", "Rizal", "Del Pilar", "Jaena"], r: "Jose Rizal wrote it for the Filipino youth."},
-            {q: "Greatest common divisor of 12 and 18?", a: "B", opts: ["3", "6", "9", "12"], r: "6 is the highest factor for both."},
-            {q: "Tax on income?", a: "A", opts: ["Income tax", "Excise tax", "Vat", "Estate tax"], r: "Income tax is based on individual earnings."},
-            {q: "Planet closest to the sun?", a: "B", opts: ["Venus", "Mercury", "Earth", "Mars"], r: "Mercury is the first planet."},
-            {q: "Unit of sound in speech?", a: "A", opts: ["Phoneme", "Morpheme", "Syntax", "Lexeme"], r: "Phonemes distinguish sounds."},
-            {q: "Smallest prime number?", a: "A", opts: ["2", "1", "3", "5"], r: "2 is the only even prime."},
-            {q: "Study of word meanings?", a: "B", opts: ["Syntax", "Semantics", "Phonetics", "Pragmatics"], r: "Semantics is the study of meaning."},
-            {q: "First Tagalog dictionary author?", a: "A", opts: ["Modesto de Castro", "San Buenaventura", "Blancas de San Jose", "Pinpin"], r: "Vocabulario de la Lengua Tagala (1613)."},
-            {q: "Process of plants making food?", a: "B", opts: ["Respiration", "Photosynthesis", "Transpiration", "Osmosis"], r: "Photosynthesis uses sunlight."},
-            {q: "Who is the Brains of the Katipunan?", a: "B", opts: ["Mabini", "Jacinto", "Bonifacio", "Rizal"], r: "Emilio Jacinto."},
-            {q: "Largest ocean?", a: "D", opts: ["Atlantic", "Indian", "Arctic", "Pacific"], r: "Pacific Ocean."},
-            {q: "Smallest unit of meaningful sound?", a: "B", opts: ["Phoneme", "Morpheme", "Grammar", "Syntax"], r: "Morphemes carry meaning."},
-            {q: "Value of pi approx?", a: "B", opts: ["3.12", "3.14", "3.16", "3.18"], r: "3.14159...."},
-            {q: "Unit for measuring sound loudness?", a: "A", opts: ["Decibel", "Hertz", "Newton", "Joule"], r: "Decibels measure intensity."}
-        ],
+    let cur=0, tot=0, sub=0, tLeft=30, timer, done=false;
+    const db = [
+        /* GEN ED (20) */
+        { c: "General Education", q: "Smallest unit of life?", a: ["A. Atom","B. Tissue","C. Cell","D. Organ"], ans: 2, r: "The cell is the basic structural/functional unit of life." },
+        { c: "General Education", q: "Author of Noli Me Tangere?", a: ["A. Rizal","B. Bonifacio","C. Mabini","D. Luna"], ans: 0, r: "Jose Rizal wrote this to expose Spanish injustices." },
+        { c: "General Education", q: "Smallest prime number?", a: ["A. 0","B. 1","C. 2","D. 3"], ans: 2, r: "2 is the only even prime number." },
+        { c: "General Education", q: "Red Planet?", a: ["A. Venus","B. Mars","C. Jupiter","D. Saturn"], ans: 1, r: "Mars has iron oxide (rust) on its surface." },
+        { c: "General Education", q: "Capital of Philippines?", a: ["A. QC","B. Manila","C. Cebu","D. Davao"], ans: 1, r: "Manila is the seat of government." },
+        { c: "General Education", q: "Father of PH Constitution?", a: ["A. Laurel","B. Recto","C. Osmeña","D. Quezon"], ans: 1, r: "Claro M. Recto presided over the 1934 convention." },
+        { c: "General Education", q: "Smallest country?", a: ["A. Monaco","B. Vatican","C. Malta","D. Nauru"], ans: 1, r: "Vatican City is the smallest independent state." },
+        { c: "General Education", q: "pH of pure water?", a: ["A. 1","B. 5","C. 7","D. 14"], ans: 2, r: "7 is neutral on the pH scale." },
+        { c: "General Education", q: "25% of 200?", a: ["A. 25","B. 50","C. 75","D. 100"], ans: 1, r: "200 divided by 4 equals 50." },
+        { c: "General Education", q: "Gas plants absorb?", a: ["A. Oxygen","B. Nitrogen","C. CO2","D. Helium"], ans: 2, r: "Plants use CO2 for photosynthesis." },
+        { c: "General Education", q: "Largest organ?", a: ["A. Liver","B. Heart","C. Skin","D. Brain"], ans: 2, r: "Skin protects the entire body." },
+        { c: "General Education", q: "Binary for 5?", a: ["A. 100","B. 101","C. 110","D. 111"], ans: 1, r: "101 in base 2 is 5." },
+        { c: "General Education", q: "Symbol for Gold?", a: ["A. Ag","B. Au","C. Fe","D. Pb"], ans: 1, r: "Au comes from the Latin 'Aurum'." },
+        { c: "General Education", q: "First Filipino Saint?", a: ["A. Calungsod","B. Ruiz","C. Rizal","D. Gomez"], ans: 1, r: "Lorenzo Ruiz was canonized in 1987." },
+        { c: "General Education", q: "Sum of triangle angles?", a: ["A. 90","B. 180","C. 270","D. 360"], ans: 1, r: "Triangles always sum to 180 degrees." },
+        { c: "General Education", q: "Abundant gas in air?", a: ["A. Oxygen","B. Nitrogen","C. CO2","D. Argon"], ans: 1, r: "Nitrogen is 78% of our air." },
+        { c: "General Education", q: "Great Plebeian?", a: ["A. Rizal","B. Bonifacio","C. Aguinaldo","D. Mabini"], ans: 1, r: "Andres Bonifacio founded the KKK." },
+        { c: "General Education", q: "Smallest state of matter?", a: ["A. Gas","B. Liquid","C. Solid","D. Plasma"], ans: 2, r: "Solids have particles packed closest." },
+        { c: "General Education", q: "Chemical for Salt?", a: ["A. H2O","B. NaCl","C. CO2","D. HCl"], ans: 1, r: "Sodium Chloride is common salt." },
+        { c: "General Education", q: "Who wrote Iliad?", a: ["A. Homer","B. Plato","C. Aristotle","D. Virgil"], ans: 0, r: "Homer is the Greek epic poet." },
 
-        "Prof Ed": [
-            {q: "Who proposed the 'Social Learning Theory'?", a: "D", opts: ["B.F. Skinner", "Jean Piaget", "Lev Vygotsky", "Albert Bandura"], r: "Albert Bandura focused on observational learning."},
-            {q: "Who coined the term 'scaffolding'?", a: "A", opts: ["Jerome Bruner", "Jean Piaget", "Lev Vygotsky", "Ivan Pavlov"], r: "While related to Vygotsky's ZPD, the term was coined by Bruner."},
-            {q: "Which philosophy emphasizes 'learning by doing'?", a: "C", opts: ["Essentialism", "Existentialism", "Progressivism", "Idealism"], r: "Progressivism, associated with John Dewey, focuses on experiential learning."},
-            {q: "A child says the sun is sleeping at night. This is?", a: "A", opts: ["Animism", "Centration", "Egocentrism", "Reversibility"], r: "Animism is attributing human traits to inanimate objects in the pre-operational stage."},
-            {q: "Which law is the Magna Carta for Public School Teachers?", a: "B", opts: ["RA 7836", "RA 4670", "RA 9155", "RA 10533"], r: "RA 4670 protects the rights and welfare of public school teachers."},
-            {q: "The 'with-it-ness' of a teacher refers to?", a: "B", opts: ["Mastery of content", "Awareness of all classroom events", "Technological skill", "Dressing professionally"], r: "Kounin's with-it-ness is having 'eyes at the back of the head'."},
-            {q: "In Freud's theory, the pleasure principle is the?", a: "C", opts: ["Ego", "Superego", "Id", "Alter-ego"], r: "The Id is the primitive part of the personality that seeks instant gratification."},
-            {q: "Which is the highest level in Bloom's Revised Taxonomy?", a: "A", opts: ["Creating", "Evaluating", "Analyzing", "Applying"], r: "Creating is the highest cognitive level in the revised taxonomy."},
-            {q: "Who proposed the Hierarchy of Needs?", a: "C", opts: ["Sigmund Freud", "Erik Erikson", "Abraham Maslow", "Carl Rogers"], r: "Maslow's hierarchy ranges from physiological needs to self-actualization."},
-            {q: "What is the unwritten lessons students learn in school?", a: "C", opts: ["Null curriculum", "Explicit curriculum", "Hidden curriculum", "Taught curriculum"], r: "Hidden curriculum refers to the values and behaviors learned unofficially."},
-             {q: "According to John Dewey, education is a process of?", a: "C", opts: ["Rules", "Preparation", "Continuous growth", "Moral values"], r: "Education is a process of living."},
-            {q: "The philosophy that reality is based on the mind is?", a: "A", opts: ["Idealism", "Realism", "Pragmatism", "Existentialism"], r: "Idealism views mind as reality."},
-            {q: "Who is known as the Father of Modern Education?", a: "C", opts: ["Dewey", "Piaget", "Johann Pestalozzi", "Locke"], r: "Pestalozzi is the father of modern pedagogy."},
-            {q: "What is the major conflict during adolescence (Erikson)?", a: "C", opts: ["Trust", "Industry", "Identity vs Role Confusion", "Intimacy"], r: "Identity formation is key in adolescence."},
-            {q: "First stage in Piaget's cognitive development theory?", a: "B", opts: ["Pre-operational", "Sensorimotor", "Concrete", "Formal"], r: "Sensorimotor (0-2 years)."},
-            {q: "A globe is what type of instructional material?", a: "B", opts: ["Picture", "Model", "Mock up", "Realia"], r: "A globe is a 3D model."},
-            {q: "Development stage called the pre-school years?", a: "C", opts: ["Middle Childhood", "Late Infancy", "Early Childhood", "Early Infancy"], r: "Early childhood (2-6)."},
-            {q: "Method questioned for reliability due to practice?", a: "C", opts: ["Split half", "Equivalent", "Test-retest", "KR"], r: "Memory affects retakes."},
-            {q: "Are vocational teachers required of professional license?", a: "A", opts: ["Yes", "No", "Only if regular", "Less than 5 years"], r: "Teachers must be licensed."},
-            {q: "Main concern of perennialism is?", a: "C", opts: ["Skills", "Morals", "Teach eternal truths", "Prepare life"], r: "Focus on classical truths."},
-            {q: "Who proposed the 'Social Learning Theory'?", a: "D", opts: ["B.F. Skinner", "Jean Piaget", "Lev Vygotsky", "Albert Bandura"], r: "Bandura focused on observational learning."},
-            {q: "What is the unwritten lessons students learn?", a: "C", opts: ["Explicit", "Null", "Hidden", "Taught"], r: "Hidden curriculum includes values/behaviors."},
-            {q: "Proponent of 'scaffolding'?", a: "A", opts: ["Jerome Bruner", "Jean Piaget", "Vygotsky", "Pavlov"], r: "Bruner coined scaffolding."},
-            {q: "Philosophy: 'Learning by Doing'?", a: "C", opts: ["Essentialism", "Existentialism", "Progressivism", "Idealism"], r: "John Dewey."},
-            {q: "Magna Carta for Teachers?", a: "B", opts: ["RA 7836", "RA 4670", "RA 9155", "RA 10533"], r: "RA 4670."},
-            {q: "With-it-ness (Kounin)?", a: "B", opts: ["Content mastery", "Awareness", "Dress", "Tech skill"], r: "Awareness of all events."},
-            {q: "Freud: Pleasure principle?", a: "C", opts: ["Ego", "Superego", "Id", "Alter-ego"], r: "The Id."},
-            {q: "Highest in Bloom Revised?", a: "A", opts: ["Creating", "Evaluating", "Analyzing", "Applying"], r: "Creating."},
-            {q: "Hierarchy of Needs?", a: "C", opts: ["Freud", "Erikson", "Maslow", "Rogers"], r: "Abraham Maslow."},
-            {q: "ZPD meaning?", a: "A", opts: ["Zone Proximal", "Zero Point", "Zone Potential", "Zero Dev"], r: "Lev Vygotsky."},
-            {q: "Proponent of 'Tabula Rasa'?", a: "B", opts: ["Rousseau", "John Locke", "Comenius", "Dewey"], r: "The mind as a blank slate."},
-            {q: "Philosophy: 'Back to Basics'?", a: "B", opts: ["Progressivism", "Essentialism", "Idealism", "Existentialism"], r: "Essentialism."},
-            {q: "Psychoanalytic personality structure seeking morality?", a: "B", opts: ["Id", "Superego", "Ego", "Libido"], r: "Superego is the moral compass."},
-            {q: "K-12 Legal Basis?", a: "B", opts: ["RA 7836", "RA 10533", "RA 9293", "RA 4670"], r: "Enhanced Basic Education Act."},
-            {q: "Inductive method is?", a: "A", opts: ["Specific to General", "General to Specific", "Direct", "Review"], r: "Specific observations to general rules."},
-            {q: "Summative assessment is?", a: "B", opts: ["During", "After", "Before", "Placement"], r: "Evaluates learning at the end."},
-            {q: "Formative assessment is?", a: "A", opts: ["During", "After", "Before", "Placement"], r: "Monitors learning."},
-            {q: "Reliability of instrument refers to?", a: "B", opts: ["Truth", "Consistency", "Fairness", "Practicality"], r: "Consistency of results."},
-            {q: "Validity refers to?", a: "A", opts: ["Measures target", "Consistency", "Speed", "Difficulty"], r: "Measures what it claims."},
-            {q: "Father of Behavioral Psych?", a: "C", opts: ["Pavlov", "Skinner", "Watson", "Thorndike"], r: "John B. Watson."}
-        ],
-        
-        "English": [
-            {q: "Who is the first Asian to receive the Nobel Prize for Literature?", a: "B", opts: ["Yasunari Kawabata", "Rabindranath Tagore", "Wole Soyinka", "Gao Xingjian"], r: "Tagore won the Nobel Prize in 1913 for 'Gitanjali'."},
-            {q: "What is the smallest unit of meaning in a language?", a: "B", opts: ["Phoneme", "Morpheme", "Syntax", "Lexeme"], r: "A morpheme is the smallest unit that carries meaning."},
-            {q: "Who is the foremost Filipino sonneteer?", a: "A", opts: ["Tarrosa Subido", "Jose Garcia Villa", "Angela Manalang Gloria", "Bienvenido Santos"], r: "Tarrosa Subido is widely recognized for her sonnets in English."},
-            {q: "Which word has the [zh] sound?", a: "D", opts: ["Ships", "Shore", "She", "Leisure"], r: "The 's' in leisure represents the voiced [zh] sound."},
-            {q: "Who wrote 'Alice's Adventures in Wonderland'?", a: "B", opts: ["Rudyard Kipling", "Lewis Carroll", "Hans Christian Andersen", "Charles Dickens"], r: "Lewis Carroll is the pen name of Charles Lutwidge Dodgson."},
-            {q: "Who is the Indian counterpart of Shakespeare?", a: "B", opts: ["Tagore", "Kalidasa", "Valmiki", "Vyasa"], r: "Kalidasa wrote dramas like Shakuntala."},
-            {q: "English Sonnet: Shakespeare, Italian Sonnet:?", a: "B", opts: ["Alighieri", "Petrarch", "Boccaccio", "Dante"], r: "Francesco Petrarch is the famous Italian sonnet writer."},
-            {q: "Who wrote 'A Rose for Emily'?", a: "A", opts: ["Faulkner", "Dickinson", "Woolf", "Shelley"], r: "William Faulkner."},
-            {q: "Which word has [z] end sound?", a: "C", opts: ["Maps", "Jokes", "Laughs", "Cars"], r: "The end sound of 'cars' is voiced."},
-            {q: "Who wrote 'The Jungle Book'?", a: "B", opts: ["Victor Hugo", "Rudyard Kipling", "William March", "K.L Mansfield"], r: "Rudyard Kipling."},
-            {q: "Venus pulchritude means?", a: "B", opts: ["Plain", "Beauty", "Ugliness", "Homeliness"], r: "Pulchritude refers to physical beauty."},
-            {q: "Smallest unit of meaning?", a: "B", opts: ["Phoneme", "Morpheme", "Syntax", "Lexeme"], r: "Morphemes carry meaning."},
-            {q: "Shakespearean rhyme scheme?", a: "A", opts: ["abab-cdcd-efef-gg", "aabb-ccdd-eeff-gg", "abba-cddc-effe-gg", "abcd-abcd-abcd-ee"], r: "Three quatrains and a couplet."},
-            {q: "Literary movement: 'Era of Decadence'?", a: "A", opts: ["Mannerism", "Quality", "Quantity", "Focus"], r: "Aesthetics over morality."},
-            {q: "IRI in reading means?", a: "B", opts: ["Intervention", "Inventory", "Innovation", "Integration"], r: "Informal Reading Inventory."},
-            {q: "Which phrasal verb means to 'extinguish'?", a: "B", opts: ["Put on", "Put out", "Put off", "Put down"], r: "Put out the fire."},
-            {q: "Excessive pride leading to downfall?", a: "B", opts: ["Hamartia", "Hubris", "Catharsis", "Anagnorisis"], r: "Hubris."},
-            {q: "Sound system study?", a: "A", opts: ["Phonology", "Morphology", "Syntax", "Semantics"], r: "Phonology."},
-            {q: "Minimal pairs develop?", a: "A", opts: ["Listening", "Physical", "Grammar", "Syntax"], r: "Sound discrimination."},
-            {q: "Short story 'Urbana at Feliza' author?", a: "A", opts: ["Modesto de Castro", "Balagtas", "Villa", "Rizal"], r: "Father of Tagalog prose."},
-            {q: "Robert Frost poems are about?", a: "B", opts: ["Girls", "Decision/Fate", "Faith", "End"], r: "Example: The Road Not Taken."},
-            {q: "Sentence pattern: 'She is on a plane'?", a: "B", opts: ["In", "On", "At", "Into"], r: "Preposition use."},
-            {q: "Linguistic approach: Internet slang study?", a: "C", opts: ["Historical", "Diachronic", "Synchronic", "Prescriptive"], r: "Study at a point in time."},
-            {q: "Error: 'They weren't dangerous criminals they were detectives'?", a: "D", opts: ["Dangling", "Misplaced", "Verbosity", "Run-on"], r: "Run-on sentence."},
-            {q: "Essay 'Self Reliance' author?", a: "B", opts: ["Thoreau", "Emerson", "Whiteman", "Stein"], r: "Ralph Waldo Emerson."},
-            {q: "Sequence of speaking lesson?", a: "C", opts: ["Practice", "Production", "Presentation", "Review"], r: "PPP Method: Presentation, Practice, Production."},
-            {q: "Function of 'that' in 'That Ronnie won surprised Shiela'?", a: "A", opts: ["Noun signal", "Main", "Sub", "Indep"], r: "Noun signal."},
-            {q: "Word formation: 'Waterbed'?", a: "B", opts: ["Blending", "Compounding", "Clipping", "Acronym"], r: "Compounding."},
-            {q: "Which word has [zh] sound?", a: "D", opts: ["Ships", "Shore", "She", "Leisure"], r: "Voice box vibration."},
-            {q: "Literary era: 'Modernism' author?", a: "A", opts: ["Joyce", "Dickens", "Austen", "Wordsworth"], r: "James Joyce."},
-            {q: "Father of English Essay?", a: "A", opts: ["Bacon", "Montaigne", "Lamb", "Steele"], r: "Francis Bacon."},
-            {q: "Study of sentence structure?", a: "B", opts: ["Morphology", "Syntax", "Phonology", "Semantics"], r: "Syntax."},
-            {q: "Voice: 'Active' or 'Passive'?", a: "A", opts: ["Voice", "Mood", "Tense", "Aspect"], r: "Action relation to subject."},
-            {q: "Haiku syllables?", a: "B", opts: ["14", "17", "19", "21"], r: "5-7-5 structure."},
-            {q: "Wrote 'The Road Not Taken'?", a: "A", opts: ["Frost", "Keats", "Byron", "Shelley"], r: "Robert Frost."}
-        ],
-       
-        "Math": [
-            {q: "What is the Least Common Multiple (LCM) of 18 and 24?", a: "D", opts: ["6", "24", "36", "72"], r: "18=2*3^2, 24=2^3*3. LCM=2^3*3^2=72."},
-            {q: "If 12 = pq, which proportion is correct?", a: "B", opts: ["6:p=2:q", "4:q=p:3", "p:12=q:1", "12:p=12:q"], r: "Product of extremes = product of means. 4*3 = p*q, so 12=pq."},
-            {q: "Find the sum of two numbers if their sum is 48 and difference is 12.", a: "B", opts: ["12 and 40", "30 and 18", "24 and 24", "36 and 12"], r: "x+y=48, x-y=12 -> 2x=60, x=30; y=18."},
-            {q: "3.5 kilograms is equal to how many grams?", a: "C", opts: ["35", "350", "3,500", "35,000"], r: "1kg = 1000g, so 3.5kg = 3500g."},
-            {q: "What is the value of t^3+5t^2-t+6 if t=-5?", a: "A", opts: ["11", "1", "6", "0"], r: "(-5)^3 + 5(-5)^2 - (-5) + 6 = -125 + 125 + 5 + 6 = 11."},
-            {q: "LCM of 18 and 24?", a: "C", opts: ["6", "36", "72", "144"], r: "72 is the smallest multiple."},
-            {q: "3 1/2 kilograms in grams?", a: "C", opts: ["35", "350", "3500", "35000"], r: "1kg = 1000g."},
-            {q: "30% discount, paid 210. Regular price?", a: "B", opts: ["250", "300", "350", "400"], r: "210 / 0.7 = 300."},
-            {q: "Angle hand at 4 o'clock?", a: "B", opts: ["90", "120", "150", "180"], r: "4 * 30 = 120 degrees."},
-            {q: "Equation of line (1,-1) parallel to x-2y=6?", a: "C", opts: ["y=x", "x+2y=3", "x-2y=3", "y=2x"], r: "Parallel lines share slope."},
-            {q: "Triangle with equal sides?", a: "A", opts: ["Equilateral", "Obtuse", "Right", "Isosceles"], r: "All sides equal."},
-            {q: "1/8 in percent?", a: "A", opts: ["12.5%", "8%", "80%", "0.125%"], r: "1 / 8 = 0.125."},
-            {q: "Richard 3 days, Alvin 6 days. Together?", a: "A", opts: ["2 days", "3 days", "2.5 days", "4 days"], r: "1/3 + 1/6 = 1/2."},
-            {q: "Nika spent 30% snacks, 40% book, had 45 left. Allowance?", a: "C", opts: ["120", "180", "150", "200"], r: "30% left = 45; 45 / 0.3 = 150."},
-            {q: "Maria 1000 at 8% compound annually. 2 years?", a: "B", opts: ["1160", "1166.4", "1766", "2166"], r: "1000(1.08)^2 = 1166.4."},
-            {q: "Missing term: 5, 20, 80, ___?", a: "A", opts: ["320", "160", "640", "1280"], r: "Multiply by 4."},
-            {q: "Factorization of x^2-16?", a: "B", opts: ["(x-4)^2", "(x+4)(x-4)", "(x-8)(x-2)", "x(x-16)"], r: "Difference of squares."},
-            {q: "Equality of 2 ratios?", a: "C", opts: ["Quotient", "Fraction", "Proportion", "Rate"], r: "Proportion."},
-            {q: "100 mm in cm?", a: "A", opts: ["10", "1", "100", "0.1"], r: "10mm = 1cm."},
-            {q: "Area of farm 500m by 40m in hectares?", a: "A", opts: ["2", "20", "200", "0.2"], r: "20,000 sqm = 2 ha."},
-            {q: "Equation line x-axis?", a: "B", opts: ["x=0", "y=0", "x=y", "y=1"], r: "The horizontal axis."},
-            {q: "Average of two is x+y. If one is x, find other.", a: "C", opts: ["x", "y", "x+2y", "2x+y"], r: "2(x+y) - x = x+2y."},
-            {q: "Probability of die divisible by 2?", a: "A", opts: ["1/2", "1/3", "1/4", "1/6"], r: "2, 4, 6 out of 6."},
-            {q: "Complementary angle to 30?", a: "A", opts: ["60", "150", "90", "180"], r: "Sum is 90."},
-            {q: "Greatest value: 3 + 3^2 + (3+3)^2?", a: "A", opts: ["48", "24", "36", "45"], r: "3 + 9 + 36 = 48."},
-            {q: "Aunt half nephew. Formula for total weight?", a: "C", opts: ["3x", "1/2+3x", "(2x)+(x)+(1/2x)", "2x"], r: "Sum of variables."},
-            {q: "2 3/4 of 100?", a: "B", opts: ["150", "275", "11/4", "2.75"], r: "11/4 * 100 = 275."},
-            {q: "Fraction < 1/3?", a: "B", opts: ["22/13", "15/26", "4/11", "33/98"], r: "Compare values."},
-            {q: "Minute hand rotates 1.5 hours in degrees?", a: "E", opts: ["60", "90", "180", "360", "540"], r: "1.5 * 360 = 540."},
-            {q: "Roman for 1000?", a: "D", opts: ["L", "C", "D", "M"], r: "M."},
-            {q: "Centimeters in 1 meter?", a: "B", opts: ["10", "100", "1000", "0.1"], r: "Metric conversion."},
-            {q: "LCM of 4 and 6?", a: "A", opts: ["12", "2", "24", "10"], r: "12 is smallest multiple."},
-            
-        ],
-        "Science": [
-            {q: "What is the powerhouse of the cell?", a: "B", opts: ["Nucleus", "Mitochondria", "Ribosome", "Lysosome"], r: "Mitochondria produce the energy (ATP) needed for the cell."},
-            {q: "What is the local name of the Philippine Flying Lemur?", a: "A", opts: ["Kagwang", "Manananggal", "Tarsier", "Pawikan"], r: "Kagwang is the local term for this endemic species."},
-            {q: "Which planet is known as the Red Planet?", a: "B", opts: ["Venus", "Mars", "Jupiter", "Saturn"], r: "Mars has iron oxide on its surface giving it a red appearance."},
-            {q: "Which gas is most abundant in the Earth's atmosphere?", a: "B", opts: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], r: "Nitrogen makes up about 78% of the atmosphere."},
-            {q: "What is the basic functional unit of life?", a: "B", opts: ["Atom", "Cell", "Tissue", "Organ"], r: "The cell is the basic structural and functional unit of all living things."},
-            {q: "Which law of motion states that for every action, there is an equal and opposite reaction?", a: "C", opts: ["Law of Inertia", "Law of Acceleration", "Law of Interaction", "Law of Universal Gravitation"], r: "Newton's 3rd Law (Interaction) explains paired forces."},
-            {q: "What is the phenomenon where light bends as it passes from one medium to another?", a: "B", opts: ["Reflection", "Refraction", "Diffraction", "Dispersion"], r: "Refraction happens due to the change in light speed between different densities."},
-            {q: "In a food chain, which organism occupies the first trophic level?", a: "B", opts: ["Decomposers", "Producers", "Primary Consumers", "Apex Predators"], r: "Producers (plants) convert solar energy into chemical energy."},
-            {q: "Which element is the most abundant in the Earth's crust?", a: "A", opts: ["Oxygen", "Silicon", "Aluminum", "Iron"], r: "Oxygen makes up about 46.6% of the Earth's crust by weight."},
-            {q: "What type of bond is formed by the sharing of electrons between atoms?", a: "B", opts: ["Ionic Bond", "Covalent Bond", "Metallic Bond", "Hydrogen Bond"], r: "Covalent bonds occur when non-metals share electron pairs."},
-            {q: "Which part of the brain controls balance and coordination?", a: "C", opts: ["Cerebrum", "Brainstem", "Cerebellum", "Thalamus"], r: "The cerebellum (little brain) manages motor control and balance."},
-            {q: "What is the term for the movement of water across a semi-permeable membrane?", a: "B", opts: ["Diffusion", "Osmosis", "Active Transport", "Capillarity"], r: "Osmosis is a specific type of diffusion involving water."},
-            {q: "Which layer of the atmosphere contains the Ozone Layer?", a: "B", opts: ["Troposphere", "Stratosphere", "Mesosphere", "Thermosphere"], r: "The Stratosphere protects Earth from harmful UV radiation via the ozone."},
-            {q: "What is the process of a solid changing directly into a gas?", a: "C", opts: ["Evaporation", "Melting", "Sublimation", "Deposition"], r: "Dry ice (CO2) is a common example of sublimation."},
-            {q: "In genetics, which law states that alleles separate during gamete formation?", a: "A", opts: ["Law of Segregation", "Law of Independent Assortment", "Law of Dominance", "Law of Linkage"], r: "Mendel's First Law ensures offspring receive one allele from each parent."},
-            {q: "What is the unit of electrical resistance?", a: "C", opts: ["Ampere", "Volt", "Ohm", "Watt"], r: "Ohm (Ω) measures the opposition to current flow."},
-            {q: "Which blood vessels carry blood away from the heart?", a: "A", opts: ["Arteries", "Veins", "Capillaries", "Venules"], r: "Arteries carry oxygenated blood away (except pulmonary artery)."},
-            {q: "What is the most common state of matter in the universe?", a: "D", opts: ["Solid", "Liquid", "Gas", "Plasma"], r: "Stars and nebulae are made primarily of plasma."},
-            {q: "Which rock type is formed from the cooling and solidification of magma?", a: "A", opts: ["Igneous", "Sedimentary", "Metamorphic", "Calcite"], r: "Igneous rocks (like granite/basalt) originate from molten rock."},
-            {q: "What is the center of an atom consisting of protons and neutrons?", a: "B", opts: ["Electron Cloud", "Nucleus", "Shell", "Valence"], r: "The nucleus contains almost all of the atom's mass."},
-            {q: "Which hormone regulates blood sugar levels?", a: "C", opts: ["Adrenaline", "Thyroxine", "Insulin", "Estrogen"], r: "The pancreas secretes insulin to lower blood glucose."},
-            {q: "What is the measure of the average kinetic energy of particles in a substance?", a: "B", opts: ["Heat", "Temperature", "Density", "Entropy"], r: "Temperature quantifies how fast particles are moving."},
-            {q: "Which planet has the most extensive ring system?", a: "D", opts: ["Jupiter", "Mars", "Neptune", "Saturn"], r: "Saturn's rings are made of ice and rock particles."},
-            {q: "What is the study of the interactions between organisms and their environment?", a: "C", opts: ["Biology", "Zoology", "Ecology", "Botany"], r: "Ecology focuses on the ecosystem as a whole."},
-            {q: "Which subatomic particle has a negative charge?", a: "C", opts: ["Proton", "Neutron", "Electron", "Positron"], r: "Electrons orbit the nucleus and carry a -1 charge."},
-            {q: "What is the result of a neutralized acid and base reaction?", a: "B", opts: ["Gas and Water", "Salt and Water", "Oxygen and Salt", "Acid and Salt"], r: "Neutralization: HCl + NaOH → NaCl + H2O."},
-            {q: "Which organ system is responsible for the exchange of gases?", a: "B", opts: ["Circulatory", "Respiratory", "Digestive", "Excretory"], r: "The lungs and airways manage O2 and CO2 exchange."},
-            {q: "How many chromosomes are in a normal human somatic cell?", a: "C", opts: ["23", "44", "46", "48"], r: "Humans have 23 pairs, totaling 46 chromosomes."},
-            {q: "What is the hardest known natural material?", a: "B", opts: ["Graphite", "Diamond", "Quartz", "Topaz"], r: "Diamond is an allotrope of carbon with a very rigid crystal structure."},
-            {q: "Which color of visible light has the shortest wavelength?", a: "D", opts: ["Red", "Green", "Yellow", "Violet"], r: "Violet has the highest frequency and shortest wavelength."},
-            {q: "What refers to the ability of an organism to maintain internal stability?", a: "A", opts: ["Homeostasis", "Metabolism", "Anabolism", "Catabolism"], r: "Homeostasis keeps body temp and pH levels steady."},
-            {q: "Which planet is known for its 'Great Red Spot'?", a: "C", opts: ["Mars", "Saturn", "Jupiter", "Neptune"], r: "The spot is a giant storm larger than Earth."},
-            {q: "What is the main source of energy for cellular processes?", a: "B", opts: ["DNA", "ATP", "RNA", "Glucose"], r: "Adenosine Triphosphate (ATP) is the cell's energy currency."},
-            {q: "Which law states that energy cannot be created or destroyed?", a: "A", opts: ["Law of Conservation of Energy", "Law of Thermodynamics", "Lenz's Law", "Ohm's Law"], r: "Energy only changes from one form to another."},
-            {q: "What type of mirror curves inward like a cave?", a: "B", opts: ["Convex", "Concave", "Plane", "Diverging"], r: "Concave mirrors can magnify or flip images depending on distance."}
-        ]
-    };
+        /* PROF ED (20) */
+        { c: "Professional Education", q: "Magna Carta for Teachers?", a: ["A. RA 7836","B. RA 4670","C. RA 9155","D. RA 10533"], ans: 1, r: "RA 4670 protects public teacher welfare." },
+        { c: "Professional Education", q: "Multiple Intelligences?", a: ["A. Piaget","B. Gardner","C. Skinner","D. Erikson"], ans: 1, r: "Howard Gardner proposed 8 types." },
+        { c: "Professional Education", q: "Blank Slate Theory?", a: ["A. Locke","B. Rousseau","C. Plato","D. Dewey"], ans: 0, r: "John Locke's Tabula Rasa." },
+        { c: "Professional Education", q: "Assessment DURING instruction?", a: ["A. Summative","B. Diagnostic","C. Formative","D. Placement"], ans: 2, r: "Formative monitors progress." },
+        { c: "Professional Education", q: "Learning by Doing?", a: ["A. Progressivism","B. Perennialism","C. Realism","D. Idealism"], ans: 0, r: "Dewey's Progressivism." },
+        { c: "Professional Education", q: "K-12 Law?", a: ["A. RA 9155","B. RA 10533","C. RA 7836","D. RA 4670"], ans: 1, r: "RA 10533 is the K-12 Act." },
+        { c: "Professional Education", q: "Father of Behaviorism?", a: ["A. Watson","B. Skinner","C. Pavlov","D. Thorndike"], ans: 0, r: "John B. Watson." },
+        { c: "Professional Education", q: "ZPD Proponent?", a: ["A. Piaget","B. Vygotsky","C. Skinner","D. Freud"], ans: 1, r: "Lev Vygotsky." },
+        { c: "Professional Education", q: "Highest in Maslow's?", a: ["A. Safety","B. Esteem","C. Self-Act","D. Belonging"], ans: 2, r: "Self-Actualization." },
+        { c: "Professional Education", q: "Wait Time promotes?", a: ["A. Silence","B. Thinking","C. Forgetting","D. Guessing"], ans: 1, r: "Provides pause for processing." },
+        { c: "Professional Education", q: "Revised Bloom Taxonomy?", a: ["A. Bloom","B. Anderson","C. Piaget","D. Vygotsky"], ans: 1, r: "Lorin Anderson updated the levels." },
+        { c: "Professional Education", q: "Pillar: Social Harmony?", a: ["A. Know","B. Do","C. Live Together","D. To Be"], ans: 2, r: "Focuses on empathy and diversity." },
+        { c: "Professional Education", q: "Psychosocial Stages?", a: ["A. Piaget","B. Kohlberg","C. Freud","D. Erikson"], ans: 3, r: "Erik Erikson." },
+        { c: "Professional Education", q: "Cognitive Development?", a: ["A. Piaget","B. Kohlberg","C. Freud","D. Erikson"], ans: 0, r: "Jean Piaget." },
+        { c: "Professional Education", q: "Great Books Philosophy?", a: ["A. Essentialism","B. Perennialism","C. Existentialism","D. Realism"], ans: 1, r: "Perennialism focuses on classic books." },
+        { c: "Professional Education", q: "Teacher Stage 4 PPST?", a: ["A. Proficient","B. Highly","C. Distinguished","D. Master"], ans: 2, r: "Distinguished is the highest stage." },
+        { c: "Professional Education", q: "Specific to General Method?", a: ["A. Deductive","B. Inductive","C. Direct","D. Inquiry"], ans: 1, r: "Inductive starts with examples." },
+        { c: "Professional Education", q: "Hidden Curriculum?", a: ["A. Written","B. Taught","C. Unintended","D. Null"], ans: 2, r: "Lessons from school culture." },
+        { c: "Professional Education", q: "Meaningful Learning?", a: ["A. Ausubel","B. Bloom","C. Gagne","D. Skinner"], ans: 0, r: "David Ausubel." },
+        { c: "Professional Education", q: "CPD Units required?", a: ["A. 15","B. 30","C. 45","D. 60"], ans: 0, r: "15 units for renewal." },
 
-    // Auto-filler to ensure exactly 30 questions per category if list is incomplete
-    for(let cat in database) {
-        while(database[cat].length < 30) {
-            database[cat].push({
-                q: `${cat} Review Item #${database[cat].length + 1}: Analyze the core principles related to this topic area.`,
-                a: "A", opts: ["Core Concept", "Distractor 1", "Distractor 2", "Distractor 3"],
-                r: "Rationalization: Reviewing past board exam trends helps in identifying critical patterns and logic used by the PRC."
-            });
-        }
+        /* MATH (20) */
+        { c: "Majorship: Mathematics", q: "Slope of 2x + y = 5?", a: ["A. 2","B. -2","C. 5","D. -5"], ans: 1, r: "y = -2x + 5. m = -2." },
+        { c: "Majorship: Mathematics", q: "Sum of Hexagon angles?", a: ["A. 360","B. 540","C. 720","D. 900"], ans: 2, r: "(6-2)x180 = 720." },
+        { c: "Majorship: Mathematics", q: "Value of sin(30)?", a: ["A. 1/2","B. 1","C. 0","D. √3/2"], ans: 0, r: "sin 30 is 0.5." },
+        { c: "Majorship: Mathematics", q: "Square root of 144?", a: ["A. 10","B. 12","C. 14","D. 16"], ans: 1, r: "12x12 = 144." },
+        { c: "Majorship: Mathematics", q: "Radius if Diameter 10?", a: ["A. 5","B. 10","C. 20","D. 100"], ans: 0, r: "Radius is half diameter." },
+        { c: "Majorship: Mathematics", q: "Value of 5!?", a: ["A. 25","B. 60","C. 120","D. 125"], ans: 2, r: "5x4x3x2x1 = 120." },
+        { c: "Majorship: Mathematics", q: "LCM of 12 and 15?", a: ["A. 30","B. 45","C. 60","D. 120"], ans: 2, r: "Smallest multiple is 60." },
+        { c: "Majorship: Mathematics", q: "GCF of 24 and 36?", a: ["A. 6","B. 8","C. 12","D. 18"], ans: 2, r: "Highest factor is 12." },
+        { c: "Majorship: Mathematics", q: "Derivative of x²?", a: ["A. x","B. 2x","C. 2","D. x³"], ans: 1, r: "2x using power rule." },
+        { c: "Majorship: Mathematics", q: "Value of log₂(32)?", a: ["A. 2","B. 4","C. 5","D. 6"], ans: 2, r: "2 to the 5th power is 32." },
+        { c: "Majorship: Mathematics", q: "Supplement of 75?", a: ["A. 15","B. 95","C. 105","D. 180"], ans: 2, r: "180 - 75 = 105." },
+        { c: "Majorship: Mathematics", q: "Median of {2,5,1,9,7}?", a: ["A. 1","B. 5","C. 7","D. 9"], ans: 1, r: "Middle is 5." },
+        { c: "Majorship: Mathematics", q: "Mode of {1,2,2,3}?", a: ["A. 1","B. 2","C. 3","D. 4"], ans: 1, r: "2 appears most." },
+        { c: "Majorship: Mathematics", q: "Hypotenuse 6 and 8?", a: ["A. 10","B. 12","C. 14","D. 20"], ans: 0, r: "sqrt(36+64) = 10." },
+        { c: "Majorship: Mathematics", q: "ml in 2.5 Liters?", a: ["A. 25","B. 250","C. 2500","D. 25000"], ans: 2, r: "1L = 1000ml." },
+        { c: "Majorship: Mathematics", q: "Simplify (x+3)(x-3)?", a: ["A. x²+9","B. x²-9","C. x²+6x+9","D. x²-6x+9"], ans: 1, r: "x² - 9." },
+        { c: "Majorship: Mathematics", q: "Value of cos(0)?", a: ["A. 0","B. 1","C. 0.5","D. -1"], ans: 1, r: "cos 0 is 1." },
+        { c: "Majorship: Mathematics", q: "Degrees in Hexagon?", a: ["A. 180","B. 360","C. 540","D. 720"], ans: 3, r: "720 total degrees." },
+        { c: "Majorship: Mathematics", q: "Area: Base 10, H 8?", a: ["A. 80","B. 40","C. 20","D. 18"], ans: 1, r: "0.5 x 10 x 8 = 40." },
+        { c: "Majorship: Mathematics", q: "Distance (0,0) to (3,4)?", a: ["A. 5","B. 7","C. 12","D. 25"], ans: 0, r: "sqrt(3²+4²) = 5." },
+
+        /* ENGLISH (20) */
+        { c: "Majorship: English", q: "Father of English Poetry?", a: ["A. Chaucer","B. Milton","C. Spenser","D. Shakespeare"], ans: 0, r: "Geoffrey Chaucer." },
+        { c: "Majorship: English", q: "Study of word formation?", a: ["A. Syntax","B. Morphology","C. Phonology","D. Semantics"], ans: 1, r: "Morphology." },
+        { c: "Majorship: English", q: "Smallest unit of sound?", a: ["A. Morpheme","B. Phoneme","C. Letter","D. Syllable"], ans: 1, r: "Phoneme." },
+        { c: "Majorship: English", q: "Poem of 14 lines?", a: ["A. Ballad","B. Sonnet","C. Epic","D. Haiku"], ans: 1, r: "Sonnet." },
+        { c: "Majorship: English", q: "Author: Mockingbird?", a: ["A. Harper Lee","B. Truman","C. Walker","D. Miller"], ans: 0, r: "Harper Lee." },
+        { c: "Majorship: English", q: "Denouement means?", a: ["A. Intro","B. Climax","C. Resolution","D. Conflict"], ans: 2, r: "Final resolution." },
+        { c: "Majorship: English", q: "Study of sentence structure?", a: ["A. Syntax","B. Morphology","C. Phonology","D. Semantics"], ans: 0, r: "Syntax." },
+        { c: "Majorship: English", q: "Author: The Waste Land?", a: ["A. Frost","B. Eliot","C. Yeats","D. Pound"], ans: 1, r: "T.S. Eliot." },
+        { c: "Majorship: English", q: "Suffix -ed in 'walked'?", a: ["A. Derivational","B. Inflectional","C. Bound","D. Free"], ans: 1, r: "Inflectional morpheme." },
+        { c: "Majorship: English", q: "Word 'Brunch' type?", a: ["A. Clipping","B. Compounding","C. Portmanteau","D. Acronym"], ans: 2, r: "Portmanteau blend." },
+        { c: "Majorship: English", q: "Orwell satire on Russia?", a: ["A. 1984","B. Animal Farm","C. Brave New","D. Flies"], ans: 1, r: "Animal Farm." },
+        { c: "Majorship: English", q: "Japanese 5-7-5 poem?", a: ["A. Tanka","B. Haiku","C. Noh","D. Kabuki"], ans: 1, r: "Haiku." },
+        { c: "Majorship: English", q: "Morning Star of English?", a: ["A. Spenser","B. Chaucer","C. Shakespeare","D. Milton"], ans: 1, r: "Geoffrey Chaucer." },
+        { c: "Majorship: English", q: "Study of meaning?", a: ["A. Phonology","B. Morphology","C. Semantics","D. Syntax"], ans: 2, r: "Semantics." },
+        { c: "Majorship: English", q: "Author: Dead Stars?", a: ["A. Villa","B. Benitez","C. Joaquin","D. Santos"], ans: 1, r: "Paz Marquez Benitez." },
+        { c: "Majorship: English", q: "Soliloquy in a play?", a: ["A. 2 talk","B. Alone talk","C. Narrator","D. Silent"], ans: 1, r: "A character alone on stage." },
+        { c: "Majorship: English", q: "Oldest English Epic?", a: ["A. Iliad","B. Odyssey","C. Beowulf","D. Aeneid"], ans: 2, r: "Beowulf." },
+        { c: "Majorship: English", q: "Figure: Classroom zoo?", a: ["A. Simile","B. Metaphor","C. Personification","D. Irony"], ans: 1, r: "Direct Metaphor." },
+        { c: "Majorship: English", q: "Play: Death Salesman?", a: ["A. Crucible","B. Miller","C. Sons","D. Bridge"], ans: 1, r: "Arthur Miller." },
+        { c: "Majorship: English", q: "Author: Jane Eyre?", a: ["A. Emily","B. Charlotte","C. Austen","D. Eliot"], ans: 1, r: "Charlotte Bronte." },
+
+        /* SCIENCE (20) */
+        { c: "Majorship: Science", q: "Powerhouse of cell?", a: ["A. Nucleus","B. Ribosome","C. Mitochondria","D. Golgi"], ans: 2, r: "Mitochondria produce ATP." },
+        { c: "Majorship: Science", q: "Newton's 1st Law?", a: ["A. Acceleration","B. Interaction","C. Inertia","D. Gravity"], ans: 2, r: "Law of Inertia." },
+        { c: "Majorship: Science", q: "Symbol for Water?", a: ["A. H2O","B. CO2","C. O2","D. NaCl"], ans: 0, r: "Two Hydrogen, one Oxygen." },
+        { c: "Majorship: Science", q: "pH of neutral solution?", a: ["A. 1","B. 5","C. 7","D. 14"], ans: 2, r: "7 is neutral." },
+        { c: "Majorship: Science", q: "Speed of Light?", a: ["A. 3e8 m/s","B. 3e5 m/s","C. 9.8 m/s","D. 343 m/s"], ans: 0, r: "300,000,000 m/s." },
+        { c: "Majorship: Science", q: "Hardest substance?", a: ["A. Gold","B. Iron","C. Diamond","D. Quartz"], ans: 2, r: "Diamond is pure carbon." },
+        { c: "Majorship: Science", q: "Planet closest to Sun?", a: ["A. Venus","B. Earth","C. Mercury","D. Mars"], ans: 2, r: "Mercury." },
+        { c: "Majorship: Science", q: "Study of heredity?", a: ["A. Biology","B. Ecology","C. Genetics","D. Botany"], ans: 2, r: "Genetics." },
+        { c: "Majorship: Science", q: "Master Gland?", a: ["A. Thyroid","B. Pituitary","C. Adrenal","D. Pancreas"], ans: 1, r: "Pituitary Gland." },
+        { c: "Majorship: Science", q: "Process: Plants food?", a: ["A. Respiration","B. Photosynthesis","C. Digestion","D. Osmosis"], ans: 1, r: "Photosynthesis." },
+        { c: "Majorship: Science", q: "Kidney unit?", a: ["A. Neuron","B. Nephron","C. Alveoli","D. Villus"], ans: 1, r: "Nephron filters blood." },
+        { c: "Majorship: Science", q: "Every action reaction?", a: ["A. 1st","B. 2nd","C. 3rd","D. 4th"], ans: 2, r: "Newton's 3rd Law." },
+        { c: "Majorship: Science", q: "Symbol for Gold?", a: ["A. Ag","B. Au","C. Fe","D. Pb"], ans: 1, r: "Au is Gold." },
+        { c: "Majorship: Science", q: "Abundant air gas?", a: ["A. Oxygen","B. Nitrogen","C. CO2","D. Argon"], ans: 1, r: "Nitrogen 78%." },
+        { c: "Majorship: Science", q: "Brain coordination?", a: ["A. Cerebrum","B. Cerebellum","C. Stem","D. Thalamus"], ans: 1, r: "Cerebellum." },
+        { c: "Majorship: Science", q: "Layer with Ozone?", a: ["A. Tropo","B. Strato","C. Meso","D. Thermo"], ans: 1, r: "Stratosphere." },
+        { c: "Majorship: Science", q: "Study of fungi?", a: ["A. Botany","B. Zoology","C. Mycology","D. Phycology"], ans: 2, r: "Mycology." },
+        { c: "Majorship: Science", q: "Liquid Earth layer?", a: ["A. Crust","B. Mantle","C. Outer Core","D. Inner"], ans: 2, r: "Outer Core." },
+        { c: "Majorship: Science", q: "NaCl is?", a: ["A. Sugar","B. Salt","C. Water","D. Acid"], ans: 1, r: "Sodium Chloride." },
+        { c: "Majorship: Science", q: "Gas to solid?", a: ["A. Sublimation","B. Deposition","C. Condense","D. Freeze"], ans: 1, r: "Deposition (frost)." }
+    ];
+
+    function startT(){ clearInterval(timer); tLeft=30; updateT(); timer=setInterval(()=>{ tLeft--; updateT(); if(tLeft<=0){ clearInterval(timer); lock(); } }, 1000); }
+    function updateT(){ document.getElementById('t-txt').innerText=tLeft+"s"; document.getElementById('t-bar').style.width=(tLeft/30*100)+"%"; }
+    function load(){
+        done=false; const d=db[cur]; document.getElementById('cat').innerText=d.c; 
+        document.getElementById('count').innerText=`QUESTION ${cur+1} OF 100`;
+        document.getElementById('q-txt').innerText=d.q; document.getElementById('r-txt').innerText=d.r; 
+        document.getElementById('r-box').style.display='none'; document.getElementById('n-btn').classList.add('hidden');
+        const c=document.getElementById('opt-c'); c.innerHTML='';
+        d.a.forEach((t,i)=>{ const v=document.createElement('div'); v.className='opt'; v.innerText=t; v.onclick=()=>sel(i); c.appendChild(v); }); 
+        startT();
     }
-
-    let currentCat = "", questions = [], currentIndex = 0, score = 0, timerVal = 30, timerInterval, locked = false;
-
-    // Audio Context Setup
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(freq, type, duration) {
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    function sel(i){
+        if(done) return; done=true; clearInterval(timer); const correct=db[cur].ans; const os=document.getElementsByClassName('opt');
+        if(i===correct){ os[i].classList.add('ok-ans'); tot++; sub++; } else { if(i!==-1) os[i].classList.add('err-ans'); os[correct].classList.add('ok-ans'); }
+        document.getElementById('r-box').style.display='block'; document.getElementById('n-btn').classList.remove('hidden');
     }
-    const playCorrect = () => { playSound(523, 'sine', 0.2); setTimeout(()=>playSound(659, 'sine', 0.3), 100); };
-    const playWrong = () => { playSound(110, 'sawtooth', 0.5); };
-
-    function startQuiz(cat) {
-        currentCat = cat; questions = [...database[cat]].sort(() => Math.random() - 0.5);
-        currentIndex = 0; score = 0;
-        document.getElementById('menu-screen').classList.add('hidden');
-        document.getElementById('quiz-screen').classList.remove('hidden');
-        document.getElementById('body').style.background = `var(--bg-${cat.toLowerCase().replace(/\s/g, "")})`;
-        loadQuestion();
-    }
-
-    function loadQuestion() {
-        locked = false; clearInterval(timerInterval); timerVal = 30;
-        document.getElementById('timer').innerText = timerVal;
-        document.getElementById('ratio-box').style.visibility = "hidden";
-        document.getElementById('next-btn').style.display = "none";
-        const item = questions[currentIndex];
-        document.getElementById('question-text').innerText = item.q;
-        ['optA', 'optB', 'optC', 'optD'].forEach((id, i) => {
-            const btn = document.getElementById(id);
-            btn.innerText = `${String.fromCharCode(65+i)}. ${item.opts[i]}`;
-            btn.className = "opt-btn"; btn.disabled = false;
-        });
-        startTimer();
-    }
-
-    function startTimer() {
-        timerInterval = setInterval(() => {
-            timerVal--; document.getElementById('timer').innerText = timerVal;
-            if (timerVal <= 0) { clearInterval(timerInterval); playWrong(); handleChoice(null); }
-        }, 1000);
-    }
-
-    function handleChoice(userChoice) {
-        if(locked) return; locked = true; clearInterval(timerInterval);
-        const item = questions[currentIndex]; const correct = item.a;
-        const ids = { 'A': 'optA', 'B': 'optB', 'C': 'optC', 'D': 'optD' };
-        document.getElementById(ids[correct]).classList.add('correct');
-        if(userChoice && userChoice !== correct) {
-            playWrong(); document.getElementById(ids[userChoice]).classList.add('wrong');
-        } else if (userChoice === correct) {
-            playCorrect(); score++; document.getElementById('score-display').innerText = `Score: ${score}`;
-        }
-        const rBox = document.getElementById('ratio-box');
-        rBox.innerHTML = `<strong>RATIONALE:</strong> ${item.r}`;
-        rBox.style.visibility = "visible";
-        document.getElementById('next-btn').style.display = "block";
-        Object.values(ids).forEach(id => document.getElementById(id).disabled = true);
-    }
-
-    function nextQuestion() {
-        currentIndex++;
-        if (currentIndex < 30) loadQuestion();
-        else { alert(`Session End! Score: ${score}/30`); location.reload(); }
-    }
+    function lock(){ sel(-1); }
+    function next(){ let n=cur+1; if(n>=db.length){ showF(); return; } if(db[n].c!==db[cur].c){ showS(); return; } cur++; load(); }
+    function showS(){ document.getElementById('quiz-ui').classList.add('hidden'); document.getElementById('s-ui').classList.remove('hidden'); document.getElementById('s-name').innerText=db[cur].c; document.getElementById('s-val').innerText=sub; }
+    function cont(){ sub=0; document.getElementById('s-ui').classList.add('hidden'); document.getElementById('quiz-ui').classList.remove('hidden'); cur++; load(); }
+    function showF(){ document.getElementById('quiz-ui').classList.add('hidden'); document.getElementById('f-ui').classList.remove('hidden'); document.getElementById('f-val').innerText=tot; }
+    load();
 </script>
 </body>
 </html>
